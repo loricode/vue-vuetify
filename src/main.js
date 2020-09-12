@@ -2,11 +2,8 @@ import Vue from 'vue'
 import App from './App.vue'
 import axios from 'axios' //npm install axios
 import vuetify from '@/plugins/vuetify'
-import 'vuetify/dist/vuetify.min.css'
 Vue.prototype.$http = axios;
 Vue.config.productionTip = false
-
-
 
 new Vue({
   vuetify,

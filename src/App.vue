@@ -1,5 +1,16 @@
 <template>
   <div id="app">
+   
+  <div>
+     <v-alert type="success" v-model="alert"  >
+       <div>
+         <v-btn small fab color="#5C6BC0" dark
+          @click="alert = false">x</v-btn>
+         Libro Eliminado
+      </div>
+     </v-alert>
+  </div>
+
    <v-card
     color="grey lighten-4"
     flat
@@ -43,7 +54,7 @@
         </v-col>
 
         <v-col cols="12" sm="12" md="3">
-          <v-btn small color="primary" dark  @click="addBook" >
+          <v-btn small color="#2196F3" dark @click="addBook" >
             aceptar</v-btn>
         </v-col>        
       </v-row>
@@ -53,8 +64,22 @@
       :headers="headers"
       :items="listaLibros"
       :items-per-page="5"
-      class="elevation-1"
-  ></v-data-table>
+      class="elevation-2"
+  >
+   <template v-slot:[`item.actions`]="{ item }">
+ 
+      <v-btn small fab color="#FF1744" dark @click="deleteBook(item)" >
+        <v-icon small>mdi-delete</v-icon>
+      </v-btn> 
+    
+      <v-btn class="btn" small fab color="#8E24AA"
+             dark @click="getBook(item)" >
+        <v-icon small>mdi-pencil</v-icon>
+      </v-btn> 
+     
+    </template>
+
+  </v-data-table>
   </div>
 </template>
 
@@ -65,8 +90,11 @@ export default {
    data() {
     return { 
        listaLibros:[],
+       id:'',
        nombre:'',
        edicion:'',
+       bandera:true,
+       alert: false,
        url:"http://localhost/applibrolaravel/public/libro",
        headers: [
           {
@@ -77,25 +105,56 @@ export default {
           },
           { text: 'Nombre', value: 'nombre' },
           { text: 'Edicion', value: 'edicion' },
+          { text: 'Actions', value: 'actions'  },
+          
       ]
      }
   },
    methods:{
      addBook: async function(){
+       let res 
        const obj = new FormData()
+       obj.append("id",this.id)
        obj.append("nombre",this.nombre)
        obj.append("edicion",this.edicion)
-       const res = await this.$http.post(this.url, obj) 
-       this.listaLibros.push(res.data.result)
+       if(this.bandera){
+          res = await this.$http.post(this.url, obj) 
+          this.listaLibros.push(res.data.result)
+       }else{
+          res = await this.$http.post(this.url+"/update", obj)
+          console.log(res.data) //sirve para ver respuesta del backend
+          this.getBooks()
+          this.id = ''
+          this.bandera = true
+       }
        this.nombre = ''
-       this.edicion = ''
-     
+       this.edicion = '' 
      } ,
+
      getBooks: async function() { 
         const res = await this.$http.get(this.url)
         this.listaLibros = res.data      
-     }, 
-      
+     },
+
+     deleteBook: async function({ id }){
+        if(confirm('quieres eliminar')){
+            const res = await this.$http.delete(this.url+`/${id}`)
+            console.log(res.data);
+            this.listaLibros=this.listaLibros
+              .filter(book => book.id != res.data.id) 
+            this.alert=true
+         }
+      },
+
+      getBook:async function({ id }){
+        const res = await this.$http.get(this.url+`/${id}`)
+        console.log(res.data);
+        this.id = res.data.id
+        this.nombre = res.data.nombre
+        this.edicion = res.data.edicion
+        this.bandera = false    
+      }    
+    
    },
    created(){ 
      this.getBooks()
@@ -115,6 +174,9 @@ export default {
 img{ 
   width: 45px;
   height: 30px;
+}
+.btn{
+  margin-left: 2px;
 }
 
 </style>
